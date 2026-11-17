@@ -1,0 +1,42 @@
+# Host networking installs destination routes on this machine.
+# Host pid plus the host cgroup filesystem let a selected application
+# be moved onto the tunnel without changing every other program.
+# The cgroup filesystem is mounted instead of "cgroup: host" so
+# docker-compose 1.29 can load this file.
+services:
+  outline:
+    build: .
+    container_name: outline-split
+    network_mode: host
+    pid: host
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+      - SYS_PTRACE
+    # The default profile blocks joining the host cgroup namespace, which
+    # is what lets a selected application's packets be marked.
+    security_opt:
+      - apparmor:unconfined
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    volumes:
+      - ./data:/data
+      - /sys/fs/cgroup:/sys/fs/cgroup
+      - /usr/share/applications:/host/apps/system:ro
+      - /usr/local/share/applications:/host/apps/local:ro
+      - ${HOME}/.local/share/applications:/host/apps/user:ro
+      - /var/lib/snapd/desktop/applications:/host/apps/snap:ro
+      - /var/lib/flatpak/exports/share/applications:/host/apps/flatpak:ro
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8787/api/state', timeout=3)",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s

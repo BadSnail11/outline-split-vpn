@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Outline split
+Comment=Split tunnel for an Outline Shadowsocks key
+Exec=/usr/bin/python3 /home/sungs/bsuir/vpn/app/desktop.py
+Icon=network-vpn
+Terminal=false
+Type=Application
+Categories=Network;
+StartupNotify=true
+StartupWMClass=outline-split

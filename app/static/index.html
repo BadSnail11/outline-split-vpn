@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Outline split</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <p class="eyebrow">Outline Shadowsocks</p>
+        <h1>Split tunnel</h1>
+      </div>
+      <p id="headline" data-state="idle">Loading</p>
+    </header>
+
+    <p class="lead">Destination addresses, domains, and applications you select go through the Shadowsocks server in your access key. Every other connection keeps its normal route.</p>
+    <p id="detail"></p>
+    <ul id="warnings"></ul>
+    <p id="summary"></p>
+
+    <form id="form" autocomplete="off">
+      <label for="key">Shadowsocks key</label>
+      <textarea id="key" name="key" rows="4" spellcheck="false" placeholder="ss://…"></textarea>
+      <label class="check" for="show-key">
+        <input id="show-key" type="checkbox">
+        Show key
+      </label>
+      <p class="hint">Leave the key empty to keep the one already saved. The password stays in the saved settings and is not shown again.</p>
+
+      <label for="ip">Destination addresses</label>
+      <div class="row">
+        <input id="ip" name="ip" inputmode="decimal" placeholder="203.0.113.10 or 203.0.113.0/24" autocomplete="off">
+        <button id="add" type="button">Add</button>
+      </div>
+      <p class="hint">Use an IP address or a network. Host bits in a network are trimmed when you apply.</p>
+      <ul id="ip-list"></ul>
+
+      <label for="domain">Domains</label>
+      <div class="row">
+        <input id="domain" name="domain" placeholder="example.com" autocomplete="off">
+        <button id="add-domain" type="button">Add</button>
+      </div>
+      <p class="hint">example.com sends that name and its subdomains through the tunnel. Other names keep the normal route.</p>
+      <ul id="domain-list"></ul>
+
+      <label for="app-search">Applications</label>
+      <div class="row">
+        <input id="app-search" name="app" placeholder="Firefox, or /usr/bin/firefox" autocomplete="off">
+        <button id="add-app" type="button">Add</button>
+      </div>
+      <ul id="app-results" hidden></ul>
+      <p class="hint">Traffic from a selected application goes through the tunnel, except addresses on this machine's local network. Close the application and open it again after you apply.</p>
+      <ul id="app-list"></ul>
+      <p id="form-error" role="alert"></p>
+
+      <div class="actions">
+        <button type="submit">Apply</button>
+        <button id="stop" class="secondary" type="button">Stop</button>
+      </div>
+    </form>
+
+    <footer>
+      <p>Destination routes apply to programs on this machine. A selected application is picked up by name when it is open. Containers with their own network keep the normal path unless they use host networking.</p>
+      <p>Disconnect the Outline desktop app before you apply. It installs its own default route.</p>
+    </footer>
+  </main>
+  <noscript><p>This page needs JavaScript to save settings.</p></noscript>
+  <script src="/static/app.js"></script>
+</body>
+</html>

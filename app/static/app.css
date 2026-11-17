@@ -1,0 +1,248 @@
+:root {
+  color: #1c1915;
+  background: #efeae2;
+  font-family: "Ubuntu", "Liberation Sans", "DejaVu Sans", sans-serif;
+  line-height: 1.45;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+}
+
+main {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 2.5rem 1.25rem 4rem;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+  border-bottom: 1px solid #1c1915;
+  padding-bottom: 0.75rem;
+}
+
+h1, p { margin: 0; }
+
+h1 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.eyebrow {
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+#headline {
+  font-weight: 600;
+  text-align: right;
+}
+
+#headline[data-state="up"] { color: #1b6b3a; }
+#headline[data-state="down"] { color: #9c2f24; }
+
+.lead, #detail, .hint, footer p {
+  margin-top: 0.85rem;
+}
+
+.lead { font-size: 1.02rem; }
+
+#summary {
+  margin-top: 0.85rem;
+  font-family: "Ubuntu Mono", "DejaVu Sans Mono", ui-monospace, monospace;
+  font-size: 0.92rem;
+}
+
+label {
+  display: block;
+  margin-top: 1.4rem;
+  font-weight: 600;
+}
+
+textarea, input, button {
+  font: inherit;
+  color: inherit;
+  border: 1px solid #1c1915;
+  border-radius: 2px;
+  background: #fffdf9;
+}
+
+textarea, input {
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  margin-top: 0.35rem;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 6.5rem;
+  font-family: "Ubuntu Mono", "DejaVu Sans Mono", ui-monospace, monospace;
+  font-size: 0.92rem;
+  -webkit-text-security: disc;
+}
+
+textarea.revealed { -webkit-text-security: none; }
+
+.row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.row input { flex: 1; margin-top: 0.35rem; }
+.row button { margin-top: 0.35rem; }
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.55rem;
+  font-weight: 500;
+}
+
+.check input { width: auto; margin: 0; }
+
+.hint, footer {
+  color: #4e4942;
+  font-size: 0.92rem;
+}
+
+#ip-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.8rem 0 0;
+}
+
+#ip-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid #d9d2c6;
+}
+
+#ip-list code {
+  font-family: "Ubuntu Mono", "DejaVu Sans Mono", ui-monospace, monospace;
+}
+
+#ip-list .empty, #app-list .empty {
+  color: #4e4942;
+  border-bottom: 0;
+}
+
+#app-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.8rem 0 0;
+}
+
+#app-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid #d9d2c6;
+}
+
+#app-list p {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+#app-list code {
+  font-family: "Ubuntu Mono", "DejaVu Sans Mono", ui-monospace, monospace;
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+
+#app-results {
+  list-style: none;
+  margin: 0.35rem 0 0;
+  padding: 0;
+  border: 1px solid #1c1915;
+  background: #fffdf9;
+  max-height: 14rem;
+  overflow: auto;
+}
+
+#app-results button {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  color: inherit;
+  border: 0;
+  border-bottom: 1px solid #d9d2c6;
+  border-radius: 0;
+}
+
+#app-results li:last-child button { border-bottom: 0; }
+
+#app-results small {
+  display: block;
+  color: #4e4942;
+}
+
+#ip-list button, .secondary {
+  background: transparent;
+}
+
+button {
+  background: #1c1915;
+  color: #fffdf9;
+  padding: 0.5rem 0.9rem;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1.2rem;
+}
+
+#warnings {
+  margin: 0.8rem 0 0;
+  padding-left: 1.1rem;
+}
+
+#warnings:empty { display: none; }
+
+#form-error {
+  min-height: 1.2rem;
+  margin: 0.8rem 0 0;
+  color: #9c2f24;
+  white-space: pre-wrap;
+}
+
+#detail { white-space: pre-wrap; }
+
+footer {
+  margin-top: 2rem;
+  border-top: 1px solid #d9d2c6;
+}
+
+:focus-visible {
+  outline: 2px solid #1c1915;
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  header { align-items: flex-start; flex-direction: column; }
+  #headline { text-align: left; }
+  .row { flex-direction: column; align-items: stretch; }
+}
