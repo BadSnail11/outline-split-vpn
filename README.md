@@ -12,6 +12,18 @@ Disconnect the Outline desktop app before you connect. It installs a default rou
 python3 /home/sungs/bsuir/vpn/app/desktop.py
 ```
 
+## Windows
+
+On Windows, run the window with Python 3.12. The first time you turn **Connected** on, Windows asks for administrator approval and starts the tunnel service. Closing the window turns the tunnel off. Saved keys stay in `%LOCALAPPDATA%\outline-split` and are not shown again.
+
+```bat
+py -3 app\windows.py
+```
+
+Put `sing-box.exe` in `bin\`. Download [sing-box 1.12.20 for Windows](https://github.com/SagerNet/sing-box/releases/download/v1.12.20/sing-box-1.12.20-windows-amd64.zip), take `sing-box.exe` out of the zip, and do not commit it. sing-box is a separate GPL-3.0 program. On an ARM PC, use the `windows-arm64` zip from that same release.
+
+An application is a program name such as `firefox.exe`, or the `.exe` you pick with Browse. Windows has no per-app route mark, so a selected program or a listed domain sends every connection into the tunnel adapter. sing-box then sends everything else out the normal route. Quit and reopen a selected program after you connect. **Tunnel all traffic** sends every connection except this machine's local network through the tunnel. **Add VPNBook keys** loads the current free Outline keys and replaces the saved ones when you press it again.
+
 ## Docker
 
 The browser page is still available if you run the container. It listens on loopback only, at [http://127.0.0.1:8787](http://127.0.0.1:8787). Starting the desktop app stops that container, because both use the `outline0` interface.

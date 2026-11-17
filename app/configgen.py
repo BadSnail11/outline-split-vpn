@@ -15,17 +15,27 @@ def build_config(
     for_apps: bool = False,
     domains: list[str] | None = None,
     direct_dns: str = "1.1.1.1",
+    platform: str = "linux",
+    process_names: list[str] | None = None,
 ) -> dict:
     names = list(domains or [])
+    processes = [item for item in (process_names or []) if item]
     route_address = list(route_address)
     if names and FAKE_CIDR not in route_address:
         route_address.append(FAKE_CIDR)
-    if not route_address and not for_apps:
+    windows = platform == "windows"
+    # Windows has no cgroup mark. Selected programs and domain names need every
+    # packet in the adapter; sing-box then sends the rest out the normal route.
+    capture_all = windows and bool(processes or names)
+    if capture_all:
+        route_address = [item for item in route_address if item != FAKE_CIDR]
+    tun_routes = [] if capture_all else route_address
+    if not tun_routes and not for_apps and not capture_all:
         raise ValueError("route_address is empty")
     server = RELAY_HOST if use_relay else server_ip
     port = RELAY_PORT if use_relay else server_port
     addresses = ["10.255.255.1/30"]
-    if for_apps or any(ipaddress.ip_network(item).version == 6 for item in route_address):
+    if for_apps or capture_all or any(ipaddress.ip_network(item).version == 6 for item in tun_routes):
         addresses.append("fd00:ffff:255::1/126")
     tun: dict = {
         "type": "tun",
@@ -33,7 +43,7 @@ def build_config(
         "interface_name": TUN_INTERFACE,
         "address": addresses,
         "mtu": 1400,
-        "auto_route": bool(route_address),
+        "auto_route": bool(tun_routes) or capture_all,
         "strict_route": False,
         "stack": "gvisor",
     }
@@ -41,10 +51,14 @@ def build_config(
         {"action": "sniff"},
         {"protocol": "dns", "action": "hijack-dns"},
     ]
-    if route_address:
+    if tun_routes and not windows:
         tun["iproute2_table_index"] = TUN_TABLE
         tun["iproute2_rule_index"] = TUN_TABLE
-        tun["route_address"] = route_address
+        tun["route_address"] = tun_routes
+        if route_exclude:
+            tun["route_exclude_address"] = route_exclude
+    elif tun_routes:
+        tun["route_address"] = tun_routes
         if route_exclude:
             tun["route_exclude_address"] = route_exclude
     if route_exclude:
@@ -63,10 +77,21 @@ def build_config(
                 "outbound": "proxy",
             }
         )
-    if route_address:
+    if processes:
         rules.append(
             {
-                "ip_cidr": route_address,
+                "process_name": processes,
+                "action": "route",
+                "outbound": "proxy",
+            }
+        )
+    proxy_cidrs = list(route_address)
+    if capture_all and names and FAKE_CIDR not in proxy_cidrs:
+        proxy_cidrs.append(FAKE_CIDR)
+    if proxy_cidrs:
+        rules.append(
+            {
+                "ip_cidr": proxy_cidrs,
                 "action": "route",
                 "outbound": "proxy",
             }
@@ -85,20 +110,21 @@ def build_config(
     route: dict = {
         "auto_detect_interface": True,
         "rules": rules,
-        "final": "proxy" if for_apps else "direct",
+        "final": "proxy" if for_apps and not capture_all else "direct",
     }
     if names:
         route["default_domain_resolver"] = "dns-proxy"
+    full = any(ipaddress.ip_network(item).prefixlen == 0 for item in proxy_cidrs)
     return {
         "log": {"level": "info", "timestamp": True},
-        "dns": _dns(names, direct_dns),
+        "dns": _dns(names, direct_dns, direct_final=windows and not names and not full),
         "inbounds": [tun],
         "outbounds": outbounds,
         "route": route,
     }
 
 
-def _dns(domains: list[str], direct_dns: str) -> dict:
+def _dns(domains: list[str], direct_dns: str, direct_final: bool = False) -> dict:
     proxy = {
         "type": "tcp",
         "tag": "dns-proxy",
@@ -106,8 +132,21 @@ def _dns(domains: list[str], direct_dns: str) -> dict:
         "server_port": 53,
         "detour": "proxy",
     }
-    if not domains:
+    if not domains and not direct_final:
         return {"servers": [proxy], "strategy": "prefer_ipv4", "final": "dns-proxy"}
+    if not domains:
+        return {
+            "servers": [
+                {
+                    "type": "udp",
+                    "tag": "dns-direct",
+                    "server": direct_dns,
+                    "server_port": 53,
+                }
+            ],
+            "strategy": "prefer_ipv4",
+            "final": "dns-direct",
+        }
     return {
         "servers": [
             proxy,

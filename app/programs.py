@@ -137,6 +137,17 @@ def _one_program(item: object) -> dict:
     exec_path = str(item.get("exec", "")).strip()
     match = str(item.get("match", "exe")).strip()
     name = _clean_name(str(item.get("name", "")))
+    if match == "exe" and ("\\" in exec_path or exec_path.lower().endswith(".exe")):
+        match = "process"
+    if match == "process":
+        if not exec_path or "\n" in exec_path or "\x00" in exec_path or len(exec_path) > 4096:
+            raise AppError("Application executable is empty")
+        leaf = exec_path.replace("/", "\\").rsplit("\\", 1)[-1].strip()
+        if not leaf or leaf in {".", ".."} or any(ch in leaf for ch in '<>:"|?*'):
+            raise AppError("Application executable is empty")
+        if not name:
+            name = leaf
+        return {"name": name, "exec": exec_path, "match": "process"}
     if match not in {"exe", "cmdline"}:
         raise AppError("Application match must be exe or cmdline")
     if not exec_path or "\n" in exec_path or "\x00" in exec_path:

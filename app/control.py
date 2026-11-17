@@ -1,6 +1,5 @@
 import json
 import os
-import pwd
 import socket
 import threading
 from pathlib import Path
@@ -46,6 +45,8 @@ def serve(supervisor, socket_path: Path, stop: threading.Event) -> None:
     socket_path.unlink(missing_ok=True)
     server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     server.bind(str(socket_path))
+    import pwd
+
     uid = int(os.environ.get("PKEXEC_UID") or os.geteuid())
     gid = pwd.getpwuid(uid).pw_gid
     os.chown(socket_path, uid, gid)

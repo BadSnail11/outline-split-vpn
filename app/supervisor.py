@@ -5,6 +5,7 @@ import secrets
 import shutil
 import signal
 import subprocess
+import sys
 import threading
 import time
 from pathlib import Path
@@ -364,10 +365,18 @@ class Supervisor:
                 warnings.append(
                     "Listed domains and their subdomains go through the tunnel. Other names keep the normal route."
                 )
+            if sys.platform == "win32" and apps:
+                warnings.append("Quit and reopen a selected program after you connect.")
         config = None
         if routes or apps:
             if not addresses:
                 raise AppError(f"Could not resolve {parsed.server}")
+            processes = _windows_processes(apps) if sys.platform == "win32" else []
+            if sys.platform == "win32" and apps and not processes:
+                raise AppError("Use a Windows program such as firefox.exe")
+            direct_dns = "1.1.1.1"
+            if names and sys.platform != "win32":
+                direct_dns = DomainNat().peek()
             config = build_config(
                 method=parsed.method,
                 password=parsed.password,
@@ -378,7 +387,9 @@ class Supervisor:
                 route_exclude=excludes,
                 for_apps=bool(apps),
                 domains=names,
-                direct_dns=DomainNat().peek() if names else "1.1.1.1",
+                direct_dns=direct_dns,
+                platform="windows" if sys.platform == "win32" else "linux",
+                process_names=processes,
             )
         return _Plan(addresses, routes, excludes, warnings, config)
 
@@ -412,10 +423,10 @@ class Supervisor:
                 code = self.proc.returncode if self.proc is not None else 1
                 detail = self._tail() or f"sing-box exited with status {code}"
                 raise AppError(_hint(detail))
-            if self.domains and not self.all_traffic:
+            if sys.platform != "win32" and self.domains and not self.all_traffic:
                 self.domain_nat = DomainNat()
                 self.domain_nat.start()
-            if self.apps:
+            if sys.platform != "win32" and self.apps:
                 self.router = AppRouter()
                 self.router.start(self.apps, plan.addresses)
         except AppError:
@@ -610,7 +621,13 @@ class Supervisor:
             state = "up"
             if self.all_traffic:
                 headline = "Routing all traffic"
-            elif self.apps and attached == 0 and not self.ips and not self.domains:
+            elif (
+                sys.platform != "win32"
+                and self.apps
+                and attached == 0
+                and not self.ips
+                and not self.domains
+            ):
                 headline = "Tunnel is up"
             else:
                 headline = "Routing selected traffic"
@@ -654,13 +671,16 @@ class Supervisor:
             if self.apps:
                 count = len(self.apps)
                 label = f"{count} application" if count == 1 else f"{count} applications"
-                if attached == 0 and not parts:
+                if sys.platform == "win32":
+                    parts.append(label)
+                elif attached == 0 and not parts:
                     return (
                         f"{label} selected, and no matching process is open. "
                         "Close the application and open it again."
                     )
-                process = "process" if attached == 1 else "processes"
-                parts.append(f"{label} ({attached} {process})")
+                else:
+                    process = "process" if attached == 1 else "processes"
+                    parts.append(f"{label} ({attached} {process})")
             text = f"{', '.join(parts)} use {TUN_INTERFACE}. Other traffic keeps the normal route."
             if self.apps:
                 text += " Connections already open stay on the normal route until the application is opened again."
@@ -724,6 +744,20 @@ def _with_server(excludes: list[str], server_ips: list[str]) -> list[str]:
         if network not in chosen:
             chosen.append(network)
     return chosen
+
+
+def _windows_processes(apps: list[dict]) -> list[str]:
+    names: list[str] = []
+    for item in apps:
+        raw = str(item.get("exec", "")).replace("/", "\\")
+        leaf = raw.rsplit("\\", 1)[-1].strip()
+        if not leaf:
+            continue
+        if not leaf.lower().endswith(".exe"):
+            leaf = f"{leaf}.exe"
+        if leaf not in names:
+            names.append(leaf)
+    return names
 
 
 def outline_desktop_device() -> str:
